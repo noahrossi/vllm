@@ -129,22 +129,25 @@ class ExtractHiddenStatesProposer:
         if num_tokens_across_dp is not None:
             num_tokens_across_dp[self.dp_rank] = num_input_tokens
 
+        slot_mapping_dict = self._get_slot_mapping(
+            num_input_tokens, common_attn_metadata.slot_mapping
+        )
+
         with set_forward_context(
             per_layer_attn_metadata,
             self.vllm_config,
             num_tokens=num_input_tokens,
             num_tokens_across_dp=num_tokens_across_dp,
             cudagraph_runtime_mode=cudagraph_runtime_mode,
-            slot_mapping=self._get_slot_mapping(
-                num_input_tokens, common_attn_metadata.slot_mapping
-            ),
+            slot_mapping=slot_mapping_dict,
         ):
             self.model(
                 hidden_states=self.hidden_states[:num_input_tokens],
             )
 
-        # Return the sampled tokens as "draft" tokens
-        # Shape: [batch_size, 1] to match num_speculative_tokens=1
+        # Return the sampled tokens as "draft" tokens.
+        # The actual draft token values used for scheduling are overridden
+        # in propose_draft_token_ids() with sanitized next_token_ids.
         return sampled_token_ids
 
     def _get_slot_mapping(

@@ -78,9 +78,9 @@ def dummy_attention(layer_name, _placeholder):
 
 
 def basic_cache(
-    to_cache: torch.Tensor,  # shape: [num_blocks, block_size, num_heads, head_size]
-    kv_cache: torch.Tensor,  # shape: [seq_len, num_heads, head_size]
-    slot_mapping: torch.Tensor,  # shape: [seq_len]
+    to_cache: torch.Tensor,  # shape: [num_tokens, num_heads, head_size]
+    kv_cache: torch.Tensor,  # shape: [num_blocks, block_size, num_heads, head_size]
+    slot_mapping: torch.Tensor,  # shape: [num_tokens]
 ):
     num_blocks, block_size, num_heads, head_size = kv_cache.shape
     token_kv_cache = kv_cache.view(num_blocks * block_size, num_heads, head_size)

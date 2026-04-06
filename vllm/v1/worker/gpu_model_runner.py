@@ -4578,7 +4578,7 @@ class GPUModelRunner(
                 )
             target_hidden_states = [h[:num_scheduled_tokens] for h in aux_hidden_states]
 
-            draft_token_ids = self.drafter.propose(
+            self.drafter.propose(
                 sampled_token_ids=sampled_token_ids,
                 target_hidden_states=target_hidden_states,
                 common_attn_metadata=common_attn_metadata,
@@ -4595,6 +4595,12 @@ class GPUModelRunner(
             self._copy_valid_sampled_token_count(
                 next_token_ids, valid_sampled_tokens_count
             )
+            # Use sanitized next_token_ids as draft tokens instead of raw
+            # sampled_token_ids which may contain -1 for invalid/discarded
+            # requests. These draft tokens flow into input_ids for the next
+            # iteration, and -1 causes an illegal memory access in the
+            # embedding layer.
+            draft_token_ids = next_token_ids.unsqueeze(1)
 
         elif (
             spec_config.use_eagle()
